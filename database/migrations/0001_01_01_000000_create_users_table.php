@@ -20,6 +20,7 @@ return new class extends Migration
             $table->enum('role', ['admin'])->default('admin');
             $table->rememberToken();
             $table->timestamps();
+            $table->enum('role', ['admin', 'mahasiswa'])->default('mahasiswa')->change();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -46,5 +47,8 @@ return new class extends Migration
         Schema::dropIfExists('users');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::table('users', function (Blueprint $table) {
+            $table->enum('role', ['admin'])->default('admin')->change();
+        });
     }
 };

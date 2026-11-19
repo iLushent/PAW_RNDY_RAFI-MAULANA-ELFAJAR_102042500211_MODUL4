@@ -20,6 +20,61 @@ class HomeController extends Controller
         // 5. Ambil list penerbit unik untuk opsi dropdown filter
         // 6. Return view 'home' dengan data buku dan list penerbit
 
+                $query = Buku::query();
+
+        // 1. Pencarian
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('judul', 'like', "%{$search}%")
+                  ->orWhere('penulis', 'like', "%{$search}%")
+                  ->orWhere('penerbit', 'like', "%{$search}%");
+            });
+        }
+
+        // 2. Filter penerbit dan stok
+        if ($request->filled('penerbit')) {
+            $query->where('penerbit', $request->input('penerbit'));
+        }
+
+        if ($request->filled('status')) {
+            if ($request->status === 'tersedia') {
+                $query->where('stok', '>', 0);
+            } elseif ($request->status === 'habis') {
+                $query->where('stok', '<=', 0);
+            }
+        }
+
+        // 3. Pengurutan
+        switch ($request->input('sort')) {
+            case 'judul_asc':
+                $query->orderBy('judul', 'asc');
+                break;
+            case 'judul_desc':
+                $query->orderBy('judul', 'desc');
+                break;
+            case 'tahun_desc':
+                $query->orderBy('tahun_terbit', 'desc');
+                break;
+            case 'tahun_asc':
+                $query->orderBy('tahun_terbit', 'asc');
+                break;
+            case 'stok_desc':
+                $query->orderBy('stok', 'desc');
+                break;
+            default:
+                $query->latest();
+                break;
+        }
+
+        // 4. Paginasi 8 data, parameter URL tetap terbawa
+        $buku = $query->paginate(8)->withQueryString();
+
+        // 5. Daftar penerbit unik untuk dropdown
+        $listPenerbit = Buku::select('penerbit')->distinct()->orderBy('penerbit', 'asc')->pluck('penerbit');
+
+        return view('home', compact('buku', 'listPenerbit'));
+
         $buku = Buku::paginate(8);
         $listPenerbit = collect();
 
